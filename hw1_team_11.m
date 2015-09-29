@@ -3,9 +3,9 @@
 %
 % Homework 1
 %
-% Team number: put your team number here (e.g. 1)
-% Team leader: e.g. Jane Smith (js1234)
-% Team members: 
+% Team number: 11
+% Team leader: Martin Ong (mo2454)
+% Team members: Phillip Godzin (pgg2105), Alice Chang (avc2120)
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -16,8 +16,8 @@ function  hw1_team_11(serPort)
 Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
 Total_Distance = 0;                                 % Initialize Total Distance
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
-displacement = [0,0];
-a = 0;
+displacement = [0,0];                               % x and y displacement from first wall bump
+a = 0;                                              % angle change since first wall bump
 
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
 while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < 1
@@ -42,19 +42,16 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < 1
         % While the robot is being bumped, turn left until it is no longer being bumped.
         hasBeenBumped = true;
         turnAngle(serPort, 0.2, 5);
-        [a, displacement, Total_Distance] = ...
-            update(a, displacement, Total_Distance, serPort);
+        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
     elseif (~isCurrentlyBumped && WallSensor)
         % If it is against a wall and not being bumped, continue moving forward.
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
-        [a, displacement, Total_Distance] = ...
-            update(a, displacement, Total_Distance, serPort);
+        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
     elseif (~WallSensor && hasBeenBumped)
         % If there is no wall to the right, make a half-circle turn (round the corner) to the right looking
         % for another wall.
         SetFwdVelRadiusRoomba(serPort, 0.2, -0.2);
-        [a, displacement, Total_Distance] = ...
-            update(a, displacement, Total_Distance, serPort);
+        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
     end
     pause(0.1);
 end
