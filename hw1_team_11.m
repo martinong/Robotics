@@ -18,13 +18,14 @@ Total_Distance = 0;                                 % Initialize Total Distance
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
 displacement = [0,0];                               % x and y displacement from first wall bump
 a = 0;                                              % angle change since first wall bump
+% fig = figure();                                   % Figure for plotting path
+% hold on;
 
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
 while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < 1
-    display(sqrt(displacement(1)^2 + displacement(2)^2));
-    display(Total_Distance);
+%     plot(displacement(1), displacement(2), 'bo');             % Plots path
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
-    WallSensor = WallSensorReadRoomba(serPort);        % Read Wall Sensor, Requires WallsSensorReadRoomba file
+    WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
 
     isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;     % Check if the robot is in a bumped state
     
@@ -36,24 +37,24 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < 1
             AngleSensorRoomba(serPort);
             hasBeenBumped = true;
         else
-            SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+            SetFwdVelRadiusRoomba(serPort, 0.5, inf);
         end
     elseif(isCurrentlyBumped)
         % While the robot is being bumped, turn left until it is no longer being bumped.
         hasBeenBumped = true;
-        turnAngle(serPort, 0.2, 5);
+        turnAngle(serPort, 0.1, 20);
         [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
-    elseif (~isCurrentlyBumped && WallSensor)
+    elseif (WallSensor)
         % If it is against a wall and not being bumped, continue moving forward.
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
         [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
-    elseif (~WallSensor && hasBeenBumped)
+    else
         % If there is no wall to the right, make a half-circle turn (round the corner) to the right looking
         % for another wall.
-        SetFwdVelRadiusRoomba(serPort, 0.2, -0.2);
-        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
+        SetFwdVelRadiusRoomba(serPort, 0.1, -0.2);
+        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort); 
     end
-    pause(0.1);
+    pause(0.05);
 end
 
 SetFwdVelRadiusRoomba(serPort, 0, 2);                                       % Stop the Robot
@@ -64,6 +65,10 @@ end
 function [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort)
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
-    displacement = displacement + [d*cos(a), d*sin(a)];
+    [dr,dc] = size(d);
+    [ar,ac] = size(a);
+    if (dr && dc && ar && ac)
+        displacement = displacement + [d*cos(a), d*sin(a)];
+    end
     Total_Distance = Total_Distance + d;
 end
