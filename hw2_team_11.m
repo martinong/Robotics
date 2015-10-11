@@ -14,20 +14,26 @@ function  hw2_team_11(serPort)
 
 displacement = [0,0];                               % x and y displacement from first wall bump
 a = 0;                                              % angle change since first wall bump
+Total_Distance = 0;
 
-
-while(displacement(1) ~= 4 && displacement(2) ~= 0)
-    
+display('hi');
+while (~isequal(displacement, [0,4]))
+    display('inside loop');
+    [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
     isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;     % Check if the robot is in a bumped state
     
     while (~isCurrentlyBumped)
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+        [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
         isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
+        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
         pause(0.05);
     end
-    followWall(displacement, a);
+    display('follow wall');
+    followWall(serPort, displacement, a);
 end 
+display('done');
 end
 
 function [displacement, a] = followWall(serPort, displacement, a)
@@ -38,9 +44,11 @@ Total_Distance = 0;                                 % Initialize Total Distance
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
 % fig = figure();                                   % Figure for plotting path
 % hold on;
-
+displacements = []
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
-while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2 || displacement(1) ~= 0
+while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2 || abs(displacement(1)) < 0.3
+    displacements = [displacement(1) displacement];
+    min(displacements)
 %     plot(displacement(1), displacement(2), 'bo');             % Plots path
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
     WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
