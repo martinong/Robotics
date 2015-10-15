@@ -41,11 +41,13 @@ while sqrt((displacement(1)-4)^2 + displacement(2)^2) > 0.3 || Total_Distance < 
     
 end
 
+display('Target Reached');
 SetFwdVelRadiusRoomba(serPort, 0, 2);      % Stop the Robot
 
 end
 
 function [displacement, a] = followWall(serPort, displacement, a, Total_Distance)
+Wall_Follow_Starting_Displacement = displacement;
 Wall_Follow_Starting_Distance = Total_Distance;
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
 
@@ -101,9 +103,11 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2
     pause(0.05);
 end
 
-if (sqrt(displacement(1)^2 + displacement(2)^2) < 0.25 && Total_Distance > 0.25)
-    SetFwdVelRadiusRoomba(serPort, 0, 2);       % Stop the Robot
-    display('I AM STUCK. :(');                  % Robot is stuck and can't reach target
+if (sqrt((displacement(1)-Wall_Follow_Starting_Displacement(1))^2 + ...
+        (displacement(2)-Wall_Follow_Starting_Displacement(2))^2) < 0.25 ...
+        && Total_Distance > 0.25)
+    SetFwdVelRadiusRoomba(serPort, 0, 2);                               % Stop the Robot
+    display('I AM STUCK. (Target cannot be reached)');                  % Robot is stuck and can't reach target
 end
 
 end
