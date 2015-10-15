@@ -52,7 +52,9 @@ Wall_Follow_Starting_Distance = Total_Distance;
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
 
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
-while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2
+while sqrt((displacement(1)-Wall_Follow_Starting_Displacement(1))^2 + ...
+        (displacement(2)-Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
+        || Total_Distance - Wall_Follow_Starting_Distance < .25
         
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
     WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
@@ -103,12 +105,9 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2
     pause(0.05);
 end
 
-if (sqrt((displacement(1)-Wall_Follow_Starting_Displacement(1))^2 + ...
-        (displacement(2)-Wall_Follow_Starting_Displacement(2))^2) < 0.25 ...
-        && Total_Distance > 0.25)
-    SetFwdVelRadiusRoomba(serPort, 0, 2);                               % Stop the Robot
-    display('I AM STUCK. (Target cannot be reached)');                  % Robot is stuck and can't reach target
-end
+SetFwdVelRadiusRoomba(serPort, 0, 2);                               % Stop the Robot
+display('I AM STUCK. (Target cannot be reached)');                  % Robot is stuck and can't reach target
+
 
 end
 
