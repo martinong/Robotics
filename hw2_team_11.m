@@ -12,11 +12,13 @@
 %% main function
 function  hw2_team_11(serPort)
 
+Total_Distance = 0;                                 % Initialize Total Distance
 displacement = [0,0];                               % x and y displacement from first wall bump
 a = 0;                                              % angle change since first wall bump
-Total_Distance = 0;
 fig = figure();                                     % Figure for plotting path
 hold on;
+
+% Plot straight line path to target in green
 x=0:4;
 y = zeros(size(x));
 plot(x, y, 'g');
@@ -30,13 +32,11 @@ while sqrt((displacement(1)-4)^2 + displacement(2)^2) > 0.3 || Total_Distance < 
     
     % Go straight until wall bump
     if (~isCurrentlyBumped)
-        plot(displacement(1), displacement(2), 'bo');             % Plots path
-        
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
         pause(0.05);
     else
         % Follow wall until m-line reached
-        [displacement, a] = followWall(serPort, displacement, a);
+        [displacement, a] = followWall(serPort, displacement, a, Total_Distance);
     end
     
 end
@@ -45,16 +45,13 @@ SetFwdVelRadiusRoomba(serPort, 0, 2);      % Stop the Robot
 
 end
 
-function [displacement, a] = followWall(serPort, displacement, a)
-
-% Variable Declaration
-Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
-Total_Distance = 0;                                 % Initialize Total Distance
+function [displacement, a] = followWall(serPort, displacement, a, Total_Distance)
+Wall_Follow_Starting_Distance = Total_Distance;
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
 
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
 while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2
-    plot(displacement(1), displacement(2), 'bo');             % Plots path
+        
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
     WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
 
@@ -87,7 +84,9 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2
     end
     
     % Reaches m-line
-    if (abs(displacement(2)) < 0.15 && Total_Distance > 0.2)
+    if (abs(displacement(2)) < 0.15 && ...
+            (Total_Distance - Wall_Follow_Starting_Distance) > 0.2 && ...
+            displacement(1) > 0)
         if (displacement(1) < 4)
             turnAngle(serPort, 0.1, (-a)./(pi/180));
             break;  % Stop wall following
@@ -102,9 +101,9 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2
     pause(0.05);
 end
 
-if (~(sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < .2))
-    SetFwdVelRadiusRoomba(serPort, 0, 2);      % Stop the Robot
-    display('I AM STUCK. :(');
+if (sqrt(displacement(1)^2 + displacement(2)^2) < 0.25 && Total_Distance > 0.25)
+    SetFwdVelRadiusRoomba(serPort, 0, 2);       % Stop the Robot
+    display('I AM STUCK. :(');                  % Robot is stuck and can't reach target
 end
 
 end
@@ -119,4 +118,10 @@ function [a, displacement, Total_Distance] = update(a, displacement, Total_Dista
         displacement = displacement + [d*cos(a), d*sin(a)];
     end
     Total_Distance = Total_Distance + d;
+    
+    % Plots path
+    plot(displacement(1), displacement(2), 'bo','MarkerSize', 20);
+    line([displacement(1), displacement(1) + 1/20 * cos(a)], ...
+        [displacement(2), displacement(2) + 1/20 * sin(a)], ...
+        'LineWidth', 1, 'Color', [0, 0, 0]);
 end
