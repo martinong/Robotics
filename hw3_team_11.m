@@ -8,15 +8,15 @@
 % Team members: Phillip Godzin (pgg2105), Alice Chang (avc2120)
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+ 
 
 
 %% main function
 function  hw3_team_11(serPort)
     global time; time = tic;                                      % time since last update
-    global keySet; keySet =   {};
-    global valueSet; valueSet = [];
-    global map; map = containers.Map(keySet,valueSet)
+    global keySet; keySet =   {'0 0'};
+    global valueSet; valueSet = 1;
+    global map; map = containers.Map(keySet,valueSet, 'KeyType', 'char');
     global displacement; displacement = [0,0];                               % x and y displacement from first wall bump
     global a; a = 0;                                              % angle change since first wall bump
     global Total_Distance; Total_Distance = 0;
@@ -24,18 +24,18 @@ function  hw3_team_11(serPort)
     
     spiral(serPort);
     while(toc(time) < 300)
-        if(isKey(map, [x,y]) && map([x,y]) == 2)
+        if(isKey(map, toChar(displacement(1),displacement(2))) && map(toChar(displacement(1),displacement(2))) == 2)
             randomBounce(serPort);
         end
-        if(~isKey(map, [x,y]))
-            wallFollow(serPort);
+        if(~isKey(map, toChar(displacement(1),displacement(2))))
+            WallFollow(serPort);
         end
     end
 %     rect(map);
 end
 
 function spiral(serPort)
-
+    global map displacement;
     bumped = false;
     radius = 0.05;
     while (~bumped)
@@ -45,8 +45,8 @@ function spiral(serPort)
         bumped = BumpRight || BumpLeft || BumpFront;
         radius = min(radius + 0.005, 2);  
         update(serPort);
-        if(~isKey(map, [x,y]))
-            map = updateMap(1);
+        if(~isKey(map, toChar(displacement(1),displacement(2))))
+            updateMap(1);
         end
     end
     pause(0.1);
@@ -55,13 +55,18 @@ end
 
 function WallFollow(serPort)
 % Variable Declaration
-hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
 
+global displacement Total_Distance;
+hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
+Wall_Follow_Starting_Displacement = displacement;
+Wall_Follow_Starting_Distance = Total_Distance;
 % fig = figure();                                   % Figure for plotting path
 % hold on;
 
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
-while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < 1
+while sqrt((displacement(1)-Wall_Follow_Starting_Displacement(1))^2 + ...
+        (displacement(2)-Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
+        || Total_Distance - Wall_Follow_Starting_Distance < .25
 %     plot(displacement(1), displacement(2), 'bo');             % Plots path
     [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
     WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
@@ -103,10 +108,9 @@ end
 
 
 function randomBounce(serPort)
-    [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-    isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
-    
-    [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+
+    global map displacement;
+    [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
     if (isCurrentlyBumped)
         randomAngle = rand * 180 + 90;
@@ -116,13 +120,15 @@ function randomBounce(serPort)
     end
     pause(0.05);
     update(serPort);
-    if(~isKey(map, [x,y]))
+    if(~isKey(map, toChar(displacement(1),displacement(2))))
         updateMap(1);
     end
 
 end
 % Update the total distance travelled and displacement.
 function update(serPort)
+
+    global displacement a Total_Distance;
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
     [dr,dc] = size(d);
@@ -149,11 +155,23 @@ end
 end
 
 function updateMap(val)
+
+    global time map displacement;
     diameter = 0.4;
     x = ceil(displacement(1)/diameter);
     y = ceil(displacement(2)/diameter);
-    if(~isKey(map, [x,y]) || map([x,y]) ~= val)
+    if(~isKey(map, toChar(x,y)) || map(toChar(x,y)) ~= val)
     	time = tic;
     end
-    map([x,y]) = val;
+    map(toChar(x,y)) = val;
+end
+
+function str = toChar(x, y)
+str = strcat(num2str(x), ' ', num2str(y));
+end
+
+function [x,y]=  toXY(str)
+[x,y] = strsplit(str);
+x = str2num(x);
+y = str2num(y);
 end
