@@ -2897,7 +2897,6 @@ classdef CreateRobot < handle
                     % Change object parameters to new values
                     obj.velInt= FwdVel;
                     obj.wInt= AngVel;
-                    disp('moving!')
                     
                 catch me
                     if ~strcmp(me.identifier,'SIMULATOR:AutonomousDisabled')

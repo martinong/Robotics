@@ -16,7 +16,7 @@ function  hw3_team_11(serPort)
     global time; time = tic;                                      % time since last update
     global keySet; keySet =   {'0 0'};
     global valueSet; valueSet = 1;
-    global map; map = containers.Map(keySet,valueSet, 'KeyType', 'char');
+    global map; map = containers.Map(keySet,valueSet);
     global displacement; displacement = [0,0];                               % x and y displacement from first wall bump
     global a; a = 0;                                              % angle change since first wall bump
     global Total_Distance; Total_Distance = 0;
@@ -37,7 +37,7 @@ end
 function spiral(serPort)
     global map displacement;
     bumped = false;
-    radius = 0.05;
+    radius = 0.1;
     while (~bumped)
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
         SetFwdVelRadiusRoomba(serPort, 0.2, radius);
@@ -64,8 +64,8 @@ Wall_Follow_Starting_Distance = Total_Distance;
 % hold on;
 
 % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
-while sqrt((displacement(1)-Wall_Follow_Starting_Displacement(1))^2 + ...
-        (displacement(2)-Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
+while sqrt((displacement(1) - Wall_Follow_Starting_Displacement(1))^2 + ...
+        (displacement(2) - Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
         || Total_Distance - Wall_Follow_Starting_Distance < .25
 %     plot(displacement(1), displacement(2), 'bo');             % Plots path
     [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
@@ -81,7 +81,7 @@ while sqrt((displacement(1)-Wall_Follow_Starting_Displacement(1))^2 + ...
             AngleSensorRoomba(serPort);
             hasBeenBumped = true;
         else
-            SetFwdVelRadiusRoomba(serPort, 0.5, inf);
+            SetFwdVelRadiusRoomba(serPort, 0.4, inf);
         end
     elseif(isCurrentlyBumped)
         % While the robot is being bumped, turn left until it is no longer being bumped.
@@ -114,9 +114,9 @@ function randomBounce(serPort)
     isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
     if (isCurrentlyBumped)
         randomAngle = rand * 180 + 90;
-        turnAngle(serPort, 0.4, randomAngle);
+        turnAngle(serPort, 0.2, randomAngle);
     else
-        SetFwdVelRadiusRoomba(serPort, 0.4, inf);
+        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
     end
     pause(0.05);
     update(serPort);
@@ -127,7 +127,6 @@ function randomBounce(serPort)
 end
 % Update the total distance travelled and displacement.
 function update(serPort)
-
     global displacement a Total_Distance;
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
@@ -139,17 +138,28 @@ function update(serPort)
     Total_Distance = Total_Distance + d;
 end
 
-function rect(m)
+function rect(map)
+diameter = .4;
+keyset = keys(map);
+points = zeros(length(keyset), 2);
+for i=1:len(keyset)
+   points(i, :) = toXY(keyset(i)); 
+end
+% minX = min(points(:, 1));
+% minY = min(points(:, 2));
+% maxX = max(points(:, 1));
+% maxX = max(points(:, 2));
+% width = maxX - minX;
+% height = maxY - minY;
 figure();
-for i=1:size(m, 1)
-    for j = 1:size(m, 2)
-        if (m(i, j) == 0)
-            rectangle('position',[i * 0.4 j * .4 (i+1) * 0.4 (j+1)*.4],'facecolor','black');
-        elseif (m(i, j) == 1)
-            rectangle('position',[i * 0.4 j * .4 (i+1) * 0.4 (j+1)*.4],'facecolor','y');
-        else
-            rectangle('position',[i * 0.4 j * .4 (i+1) * 0.4 (j+1)*.4],'facecolor','r');
-        end
+for i=1:length(points)
+    [x, y] = points(i);
+    if (~isKey(map, toChar(x,y)))
+        rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','black');
+    elseif (map(toChar(x, y)) == 1)
+        rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','y');
+    else
+        rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','r');
     end
 end
 end
@@ -175,3 +185,4 @@ function [x,y]=  toXY(str)
 x = str2num(x);
 y = str2num(y);
 end
+

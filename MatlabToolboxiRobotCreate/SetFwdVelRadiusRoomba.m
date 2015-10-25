@@ -36,7 +36,6 @@ end
 %fwrite(serPort, [137, 255, 56, 1, 244])
 
 fwrite(serPort, [137]);  fwrite(serPort,FwdVelMM, 'int16'); fwrite(serPort,RadiusMM, 'int16');
-disp('moving!')
 pause(td)
 catch
     disp('WARNING:  function did not terminate correctly.  Output may be unreliable.')
