@@ -15,10 +15,8 @@ figure();
 for i=1:length(points)
     x = points(i, 1);
     y = points(i, 2);
-    toChar(x,y)
-    if (~isKey(map, toChar(x,y)))
-        rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','black');
-    elseif (map(toChar(x, y)) == 1)
+    isKey(map, toChar(x,y))
+    if (map(toChar(x, y)) == 1)
         rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','y');
     elseif (map(toChar(x, y)) == 2)
         rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','r');
@@ -27,11 +25,11 @@ end
 end
 
 function str = toChar(x, y)
-str = strcat(num2str(x), ' ', num2str(y));
+str = strcat(num2str(x), ',', num2str(y));
 end
 
 function xy =  toXY(str)
-p = strsplit(str);
+p = strsplit(str, ',');
 x = str2num(p{1});
 y = str2num(p{2});
 xy = [x y];
