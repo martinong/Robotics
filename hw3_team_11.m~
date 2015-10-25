@@ -11,33 +11,45 @@
 
 %% main function
 function  hw3_team_11(serPort)
+    displacement = [0,0];                               % x and y displacement from first wall bump
+    a = 0;                                              % angle change since first wall bump
+    keySet =   {};
+    valueSet = [];
+    map = containers.Map(keySet,valueSet)
     %spiral until hit
-    spiral(serPort);
+    spiral(serPort, map, a, displacement);
     %wall follow until original
     %wallFollow(serPort);
     %random bounce
-    randomBounce(serPort);
+    randomBounce(serPort, map, a, displacement);
+    rect(map);
 end
 
-function spiral(serPort)
+function spiral(serPort, map, a, displacement)
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     bumped = false;
     radius = 0.05;
     while (~bumped)
-        SetFwdVelRadiusRoomba(serPort, 0.1, radius);
-        pause(0.1);
+        [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        SetFwdVelRadiusRoomba(serPort, 0.2, radius);
+        pause(0.05);
         bumped = BumpRight || BumpLeft || BumpFront;
-        radius = min(radius + 0.001, 2);
+        radius = min(radius + 0.005, 2);  
+        [a, displacement, ~] = update(a, displacement, Total_Distance, serPort);
+        if(~isKey(map, [x,y]))
+            updateMap(map, displacement, 1);
+        end
     end
+    pause(0.1);
+
 end
 
-function WallFollow(serPort)
+function WallFollow(serPort, map)
 % Variable Declaration
 Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
 Total_Distance = 0;                                 % Initialize Total Distance
 hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
-displacement = [0,0];                               % x and y displacement from first wall bump
-a = 0;                                              % angle change since first wall bump
+
 % fig = figure();                                   % Figure for plotting path
 % hold on;
 
@@ -64,17 +76,21 @@ while sqrt(displacement(1)^2 + displacement(2)^2) > 0.25 || Total_Distance < 1
         hasBeenBumped = true;
         turnAngle(serPort, 0.1, 20);
         [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
+        getCoords(displacement);
     elseif (WallSensor)
         % If it is against a wall and not being bumped, continue moving forward.
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
         [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
+        getCoords(displacement);
     else
         % If there is no wall to the right, make a half-circle turn (round the corner) to the right looking
         % for another wall.
         SetFwdVelRadiusRoomba(serPort, 0.1, -0.2);
-        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort); 
+        [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort);
+        getCoords(displacement);
     end
     pause(0.05);
+    updateMap(map, displacement, 2);
 end
 
 SetFwdVelRadiusRoomba(serPort, 0, 2);                                       % Stop the Robot
@@ -82,7 +98,7 @@ SetFwdVelRadiusRoomba(serPort, 0, 2);                                       % St
 end
 
 
-function randomBounce(serPort)
+function randomBounce(serPort, map, a, displacement)
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
     time = tic;
@@ -96,6 +112,10 @@ function randomBounce(serPort)
             SetFwdVelRadiusRoomba(serPort, 0.4, inf);
         end
         pause(0.05);
+        [a, displacement, ~] = update(a, displacement, Total_Distance, serPort);
+        if(~isKey(map, [x,y]))
+            updateMap(map, displacement, 1);
+        end
     end
 end
 % Update the total distance travelled and displacement.
@@ -106,15 +126,13 @@ function [a, displacement, Total_Distance] = update(a, displacement, Total_Dista
     [ar,ac] = size(a);
     if (dr && dc && ar && ac)
         displacement = displacement + [d*cos(a), d*sin(a)];
+        getCoords(displacement);
     end
     Total_Distance = Total_Distance + d;
 end
 
-function rect()
+function rect(m)
 figure();
-m = zeros(100, 100);
-m(8:20, 40:90) = 1;
-m (30:50, 10:30) = 2;
 for i=1:size(m, 1)
     for j = 1:size(m, 2)
         if (m(i, j) == 0)
@@ -126,4 +144,11 @@ for i=1:size(m, 1)
         end
     end
 end
+end
+
+function map = updateMap(map, displacement, val)
+    diameter = 0.4;
+    x = ceil(displacement(1)/diameter);
+    y = ceil(displacement(2)/diameter);
+    map([x,y]) = val;
 end
