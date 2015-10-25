@@ -12,13 +12,26 @@
 %% main function
 function  hw3_team_11(serPort)
     %spiral until hit
+    spiral(serPort);
     %wall follow until original
     %wallFollow(serPort);
     %random bounce
     randomBounce(serPort);
 end
 
-function wallFollow(serPort)
+function spiral(serPort)
+    [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+    bumped = false;
+    radius = 0.05;
+    while (~bumped)
+        SetFwdVelRadiusRoomba(serPort, 0.1, radius);
+        pause(0.1);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        radius = min(radius + 0.001, 2);
+    end
+end
+
+function WallFollow(serPort)
 % Variable Declaration
 Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
 Total_Distance = 0;                                 % Initialize Total Distance
@@ -77,12 +90,7 @@ function randomBounce(serPort)
         [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
         isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
         if (isCurrentlyBumped)
-            randomAngle = 0;
-            if(BumpFront)
-                randomAngle = rand * 180 + 45;
-                randomAngle = 60 + 60.*rand;
-            else if (BumpRight)
-                randomAngle = rand 
+            randomAngle = rand * 180 + 90;
             turnAngle(serPort, 0.4, randomAngle);
         else
             SetFwdVelRadiusRoomba(serPort, 0.4, inf);

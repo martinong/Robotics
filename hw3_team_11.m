@@ -11,26 +11,31 @@
 
 %% main function
 function  hw3_team_11(serPort)
+    arr = zeros(1,1);
     %spiral until hit
+    spiral(serPort, arr);
     %wall follow until original
     %wallFollow(serPort);
     %random bounce
-    randomBounce(serPort);
+    randomBounce(serPort, arr);
+    rect(arr);
 end
 
-function spiral(serPort)
+function spiral(serPort, arr)
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     bumped = false;
     radius = 0.05;
     while (~bumped)
-        SetFwdVelRadiusRoomba(serPort, 0.1, radius);
-        pause(0.1);
+        [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        SetFwdVelRadiusRoomba(serPort, 0.2, radius);
+        pause(0.05);
         bumped = BumpRight || BumpLeft || BumpFront;
-        radius = min(radius + 0.001, 2);
+        radius = min(radius + 0.005, 2);  
     end
+    pause(0.1);
 end
 
-function WallFollow(serPort)
+function WallFollow(serPort, arr)
 % Variable Declaration
 Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
 Total_Distance = 0;                                 % Initialize Total Distance
@@ -81,7 +86,7 @@ SetFwdVelRadiusRoomba(serPort, 0, 2);                                       % St
 end
 
 
-function randomBounce(serPort)
+function randomBounce(serPort, arr)
     [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
     isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
     time = tic;
@@ -109,11 +114,8 @@ function [a, displacement, Total_Distance] = update(a, displacement, Total_Dista
     Total_Distance = Total_Distance + d;
 end
 
-function rect()
+function rect(m)
 figure();
-m = zeros(100, 100);
-m(8:20, 40:90) = 1;
-m (30:50, 10:30) = 2;
 for i=1:size(m, 1)
     for j = 1:size(m, 2)
         if (m(i, j) == 0)
