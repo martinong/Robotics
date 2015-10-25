@@ -11,12 +11,14 @@
 
 %% main function
 function  hw3_team_11(serPort)
-%spiral until hit
-%wall follow until original
-%
-end;
+    %spiral until hit
+    %wall follow until original
+    %wallFollow(serPort);
+    %random bounce
+    randomBounce(serPort);
+end
 
-function WallFollow(serPort)
+function wallFollow(serPort)
 % Variable Declaration
 Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
 Total_Distance = 0;                                 % Initialize Total Distance
@@ -66,6 +68,28 @@ SetFwdVelRadiusRoomba(serPort, 0, 2);                                       % St
 
 end
 
+
+function randomBounce(serPort)
+    [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+    isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
+    time = tic;
+    while(toc(time) <= 600)
+        [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
+        if (isCurrentlyBumped)
+            randomAngle = 0;
+            if(BumpFront)
+                randomAngle = rand * 180 + 45;
+                randomAngle = 60 + 60.*rand;
+            else if (BumpRight)
+                randomAngle = rand 
+            turnAngle(serPort, 0.4, randomAngle);
+        else
+            SetFwdVelRadiusRoomba(serPort, 0.4, inf);
+        end
+        pause(0.05);
+    end
+end
 % Update the total distance travelled and displacement.
 function [a, displacement, Total_Distance] = update(a, displacement, Total_Distance, serPort)
     d = DistanceSensorRoomba(serPort);
@@ -76,4 +100,22 @@ function [a, displacement, Total_Distance] = update(a, displacement, Total_Dista
         displacement = displacement + [d*cos(a), d*sin(a)];
     end
     Total_Distance = Total_Distance + d;
+end
+
+function rect()
+figure();
+m = zeros(100, 100);
+m(8:20, 40:90) = 1;
+m (30:50, 10:30) = 2;
+for i=1:size(m, 1)
+    for j = 1:size(m, 2)
+        if (m(i, j) == 0)
+            rectangle('position',[i * 0.4 j * .4 (i+1) * 0.4 (j+1)*.4],'facecolor','black');
+        elseif (m(i, j) == 1)
+            rectangle('position',[i * 0.4 j * .4 (i+1) * 0.4 (j+1)*.4],'facecolor','y');
+        else
+            rectangle('position',[i * 0.4 j * .4 (i+1) * 0.4 (j+1)*.4],'facecolor','r');
+        end
+    end
+end
 end
