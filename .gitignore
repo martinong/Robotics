@@ -3,6 +3,8 @@
 ## We have git for backups!
 ##---------------------------------------------------
 
+.DS_Store
+
 # Windows default autosave extension
 *.asv
 
