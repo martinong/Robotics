@@ -17,6 +17,18 @@ WallFollow(serPort);
 %random bounce
 end;
 
+function spiral(serPort)
+    [ BumpRight, BumpLeft, WheelDropRight, WheelDropLeft, WheelDropCastor, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+    bumped = false;
+    radius = 0.05;
+    while (~bumped)
+        SetFwdVelRadiusRoomba(serPort, 0.1, radius);
+        pause(0.1);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        radius = min(radius + 0.001, 2);
+    end
+end
+
 function WallFollow(serPort)
 % Variable Declaration
 Initial_Distance = DistanceSensorRoomba(serPort);   % Get the Initial Distance
