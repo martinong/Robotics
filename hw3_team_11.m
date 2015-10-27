@@ -25,12 +25,15 @@ function  hw3_team_11(serPort)
 
     spiral(serPort);
     while(toc(time) < 300)
-        if(isKey(map, toChar(displacement(1),displacement(2))) && map(toChar(displacement(1),displacement(2))) == 2)
-            display('JLKSDJFLJSKLFJLDJFKLSJDLFJLKNASKFNGSOEIBSV');
+        if(isKey(map, toChar(displacement(1),displacement(2))) && ...
+                 map(toChar(displacement(1),displacement(2))) == 2)
+            display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
             randomBounce(serPort);
         end
         if(~isKey(map, toChar(displacement(1),displacement(2))))
+            display('START WALL FOLLOW');
             WallFollow(serPort);
+            display('END WALL FOLLOW');
         end
         pause(0.05);
     end
@@ -77,8 +80,8 @@ function WallFollow(serPort)
             % If the robot hasn't hit a wall yet, continue going straight.
             % Once it hits for the first time, start keeping track of the distance and displacement.
             if (isCurrentlyBumped)
-                DistanceSensorRoomba(serPort);
-                AngleSensorRoomba(serPort);
+                Wall_Follow_Starting_Displacement = displacement;
+                Wall_Follow_Starting_Distance = Total_Distance;
                 hasBeenBumped = true;
             else
                 SetFwdVelRadiusRoomba(serPort, 0.4, inf);
@@ -185,7 +188,7 @@ end
 
 function xy =  toXY(str)
 p = strsplit(str, ',');
-x = str2num(p{1});
-y = str2num(p{2});
+x = str2double(p{1});
+y = str2double(p{2});
 xy = [x y];
 end
