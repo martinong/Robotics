@@ -29,13 +29,28 @@ function  hw3_team_11(serPort)
                  map(toChar(displacement(1),displacement(2))) == 2)
             display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
             randomBounce(serPort);
-        end
-        if(~isKey(map, toChar(displacement(1),displacement(2))))
+        elseif(~isKey(map, toChar(displacement(1),displacement(2))))
             display('START WALL FOLLOW');
             WallFollow(serPort);
             display('END WALL FOLLOW');
         end
-        pause(0.05);
+        
+        while (true)
+            SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+            
+            update(serPort);
+            pause(0.05);
+            
+            [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+            if (BumpRight || BumpLeft || BumpFront)
+                break;
+            end
+        end
+        if(~isKey(map, toChar(displacement(1),displacement(2))))
+            updateMap(1);
+        end
+        
+%         pause(0.05);
     end
     SetFwdVelRadiusRoomba(serPort, 0, 2);
     rect(map);
@@ -63,32 +78,23 @@ end
 function WallFollow(serPort)
     % Variable Declaration
     global displacement Total_Distance;
-    hasBeenBumped = false;                              % Has the robot hit a wall yet or still looking for the first
     Wall_Follow_Starting_Displacement = displacement;
     Wall_Follow_Starting_Distance = Total_Distance;
 
     % Continue until the robot is sufficiently close to where it initially hit the wall and has travelled far enough
     while sqrt((displacement(1) - Wall_Follow_Starting_Displacement(1))^2 + ...
             (displacement(2) - Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
-            || Total_Distance - Wall_Follow_Starting_Distance < .25
+            || Total_Distance - Wall_Follow_Starting_Distance < 0.3
+        
+        Total_Distance - Wall_Follow_Starting_Distance
+
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
         WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
 
         isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;     % Check if the robot is in a bumped state
 
-        if(~hasBeenBumped)
-            % If the robot hasn't hit a wall yet, continue going straight.
-            % Once it hits for the first time, start keeping track of the distance and displacement.
-            if (isCurrentlyBumped)
-                Wall_Follow_Starting_Displacement = displacement;
-                Wall_Follow_Starting_Distance = Total_Distance;
-                hasBeenBumped = true;
-            else
-                SetFwdVelRadiusRoomba(serPort, 0.4, inf);
-            end
-        elseif(isCurrentlyBumped)
+        if(isCurrentlyBumped)
             % While the robot is being bumped, turn left until it is no longer being bumped.
-            hasBeenBumped = true;
             turnAngle(serPort, 0.1, 20);
         elseif (WallSensor)
             % If it is against a wall and not being bumped, continue moving forward.
@@ -111,19 +117,6 @@ function randomBounce(serPort)
     global map displacement;
     randomAngle = rand * 180 + 90
     turnAngle(serPort, 0.2, randomAngle);
-    isCurrentlyBumped = true;
-    while (isCurrentlyBumped)
-        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
-        
-        update(serPort);
-        pause(0.05);
-        
-        [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-        isCurrentlyBumped = BumpRight || BumpLeft || BumpFront;
-    end
-    if(~isKey(map, toChar(displacement(1),displacement(2))))
-        updateMap(1);
-    end
 end
 
 %% Update the total distance travelled and displacement.
@@ -155,7 +148,6 @@ end
 % maxX = max(points(:, 2));
 % width = maxX - minX;
 % height = maxY - minY;
-figure();
 for i=1:length(points)
     x = points(i, 1);
     y = points(i, 2);
