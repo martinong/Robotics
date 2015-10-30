@@ -19,12 +19,15 @@ function  hw3_team_11(serPort)
     global displacement; displacement = [0,0];                               % x and y displacement from first wall bump
     global a; a = 0;                                              % angle change since first wall bump
     global Total_Distance; Total_Distance = 0;
-    %spiral until hit
-    fig = figure();                                   % Figure for plotting path
+    
+    global fh_pos; fh_pos = figure();                             % Figure for plotting path
     hold on;
-
+    global fh_rect; fh_rect = figure();
+    
+    %spiral until hit
     spiral(serPort);
-    while(toc(time) < 300)
+    
+    while(toc(time) < 30) % Stop if map doesn't get updated within 30 sec.
         if(isKey(map, toChar(displacement(1),displacement(2))) && ...
                  map(toChar(displacement(1),displacement(2))) == 2)
             display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
@@ -35,24 +38,10 @@ function  hw3_team_11(serPort)
             display('END WALL FOLLOW');
         end
         
-        while (true)
-            SetFwdVelRadiusRoomba(serPort, 0.2, inf);
-            
-            update(serPort);
-            pause(0.05);
-            
-            [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-            if (BumpRight || BumpLeft || BumpFront)
-                break;
-            end
-        end
-        if(~isKey(map, toChar(displacement(1),displacement(2))))
-            updateMap(1);
-        end
-        
 %         pause(0.05);
     end
     SetFwdVelRadiusRoomba(serPort, 0, 2);
+    
     rect(map);
 end
 
@@ -86,8 +75,6 @@ function WallFollow(serPort)
             (displacement(2) - Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
             || Total_Distance - Wall_Follow_Starting_Distance < 0.3
         
-        Total_Distance - Wall_Follow_Starting_Distance
-
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
         WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
 
@@ -109,19 +96,32 @@ function WallFollow(serPort)
         updateMap(2);
     end
 
-    turnAngle(serPort, 0.1, 90);
+    
+    randomAngle = rand * 90 + 45
+    turnAngle(serPort, 0.1, randomAngle);
 end
 
 %% Bounce
 function randomBounce(serPort)
     global map displacement;
     randomAngle = rand * 180 + 90
-    turnAngle(serPort, 0.2, randomAngle);
+    turnAngle(serPort, 0.1, randomAngle);
+    
+    % Go forward until bump
+    bumped = false;
+    while (~bumped)
+        [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        SetFwdVelRadiusRoomba(serPort, 0.2, radius);
+        pause(0.05);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        update(serPort);
+        updateMap(1);
+    end
 end
 
 %% Update the total distance travelled and displacement.
 function update(serPort)
-    global displacement a Total_Distance;
+    global displacement a Total_Distance fh_pos;
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
     [dr,dc] = size(d);
@@ -131,12 +131,17 @@ function update(serPort)
     end
     Total_Distance = Total_Distance + d;
     
+    figure(fh_pos);
     plot(displacement(1), displacement(2), 'bo');             % Plots path
+    
+    rect();
 end
 
 %% Plotting on map
-function rect(map)
-diameter = .4;
+function rect()
+global map fh_rect;
+figure(fh_rect);
+diameter = 0.4;
 keyset = keys(map);
 points = zeros(length(keyset), 2);
 for i=1:length(keyset)
@@ -148,13 +153,13 @@ end
 % maxX = max(points(:, 2));
 % width = maxX - minX;
 % height = maxY - minY;
-for i=1:length(points)
+for i=1:size(points,1)
     x = points(i, 1);
     y = points(i, 2);
     if (map(toChar(x, y)) == 1)
-        rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','y');
+        rectangle('position',[x*diameter, y*diameter, diameter, diameter],'facecolor','y');
     elseif (map(toChar(x, y)) == 2)
-        rectangle('position',[x * diameter y * diameter diameter diameter],'facecolor','r');
+        rectangle('position',[x*diameter, y*diameter, diameter, diameter],'facecolor','r');
     end
 end
 end
@@ -162,15 +167,14 @@ end
 
 %% Helper functions
 function updateMap(val)
-
     global time map displacement;
     diameter = 0.4;
-    x = ceil(displacement(1)/diameter);
-    y = ceil(displacement(2)/diameter);
-    if(~isKey(map, toChar(x,y)) || map(toChar(x,y)) ~= val)
+    x = round(displacement(1)/diameter);
+    y = round(displacement(2)/diameter);
+    if(~isKey(map, toChar(x,y)))
+        map(toChar(x,y)) = val;
     	time = tic;
     end
-    map(toChar(x,y)) = val;
 end
 
 
