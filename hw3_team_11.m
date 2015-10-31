@@ -84,9 +84,9 @@ function WallFollow(serPort)
             (displacement(2) - Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
             || Total_Distance - Wall_Follow_Starting_Distance < 0.3
         
-        % Only wall follow for max 30 seconds at a time
-        if(toc(time2) > 30)
-            display('Have wall followed for more than 30 seconds');
+        % Only wall follow for max 60 seconds at a time
+        if(toc(time2) > 60)
+            display('Have wall followed for more than 60 seconds');
             break;
         end
         
@@ -116,12 +116,6 @@ function WallFollow(serPort)
     
     randomAngle = rand * 90 + 45;
     turnAngle(serPort, 0.1, randomAngle);
-%     theta = 0;
-%     while theta < randomAngle
-%         turnAngle(serPort, 0.1, 5);
-%         theta = theta + 10;
-%         pause(.05);
-%     end
     
     % Go forward until bump
     [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
@@ -137,20 +131,14 @@ function WallFollow(serPort)
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
         pause(0.05);
     end
-%     SetFwdVelRadiusRoomba(serPort, 0, 2);
-%     pause(0.05);
+    SetFwdVelRadiusRoomba(serPort, 0, 2);
+    
 end
 
 %% Bounce
 function randomBounce(serPort)
     randomAngle = rand * 90 + 135;
     turnAngle(serPort, 0.1, randomAngle);
-%     theta = 0;
-%     while theta < randomAngle
-%         turnAngle(serPort, 0.1, 5);
-%         theta = theta + 10;
-%         pause(.01);
-%     end
     
      % Go forward until bump
     [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
@@ -166,6 +154,7 @@ function randomBounce(serPort)
         SetFwdVelRadiusRoomba(serPort, 0.2, inf);
         pause(0.05);
     end
+    SetFwdVelRadiusRoomba(serPort, 0, 2);
 end
 
 %% Update the total distance travelled and displacement.
@@ -185,8 +174,8 @@ end
 
 %% Plotting on map
 function rect()
-global map;
-%figure(fh_rect);
+global map fh_rect;
+figure(fh_rect);
 diameter = 0.4;
 keyset = keys(map);
 points = zeros(length(keyset), 2);
