@@ -28,6 +28,7 @@ function  hw3_team_11(serPort)
     spiral(serPort);
     
     while(toc(time) < 10) % Stop if map doesn't get updated within 30 sec.
+        map(toChar(displacement(1),displacement(2)))
         if(isKey(map, toChar(displacement(1),displacement(2))) && ...
                  map(toChar(displacement(1),displacement(2))) == 2)
             display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
@@ -99,7 +100,6 @@ function WallFollow(serPort)
         update(serPort);
         updateMap(2);
     end
-
     
     randomAngle = rand * 90 + 45;
     turnAngle(serPort, 0.1, randomAngle);
@@ -178,7 +178,7 @@ function updateMap(val)
     y = round(displacement(2)/diameter);
     % Add to map if robot reaches a point for the first time
     % or is replacing an observed point with a wall.
-    if(~isKey(map, toChar(x,y)) || map(toChar(x,y)) == 1)
+    if(~isKey(map, toChar(x,y)) || (map(toChar(x,y)) == 1 && val == 2))
         map(toChar(x,y)) = val;
     	time = tic;
     end
