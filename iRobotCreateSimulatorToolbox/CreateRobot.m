@@ -3216,11 +3216,11 @@ classdef CreateRobot < handle
                     
                     % Choose correct turning direction for shortest path
                     if angle > 0
-                        disp(['Setting turn path to shortest route. '...
-                            'Going to turn counter-clockwise'])
+%                         disp(['Setting turn path to shortest route. '...
+%                             'Going to turn counter-clockwise'])
                     else
-                        disp(['Setting turn path to shortest route. '...
-                            'Going to turn clockwise'])
+%                         disp(['Setting turn path to shortest route. '...
+%                             'Going to turn clockwise'])
                         speed= -speed;
                     end
                     

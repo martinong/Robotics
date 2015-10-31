@@ -31,7 +31,6 @@ try
     end
     
     if (turnAngle > 360 || turnAngle < -360) %sets range to +/- 360 degrees to avoid excess turning
-        disp('Setting angle to be between +/- 360 degrees');
         if (turnAngle > 360)
             while (turnAngle > 360)
                 turnAngle = turnAngle - 360;
@@ -44,10 +43,8 @@ try
     end
     
     if (turnAngle > 180) %Sets the degrees to the shortest path
-        disp('Setting turn path to shortest route. Going to turn clockwise');
         turnAngle = turnAngle - 360;
     elseif (turnAngle < -180)
-        disp('Setting turn path to shortest route. Going to turn counterclockwise');
         turnAngle = turnAngle + 360;
     end
     
@@ -68,7 +65,6 @@ try
         while( serPort.BytesAvailable() ==0)
             %disp('waiting to finish')
         end
-        %disp('Done turnAngle')
         pause(td)
         
     end

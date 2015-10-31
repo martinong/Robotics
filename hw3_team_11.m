@@ -27,26 +27,30 @@ function  hw3_team_11(serPort)
     %spiral until hit
     spiral(serPort);
     
-    while(toc(time) < 30) % Stop if map doesn't get updated within 30 sec.
+    while(toc(time) < 10) % Stop if map doesn't get updated within 30 sec.
         if(isKey(map, toChar(displacement(1),displacement(2))) && ...
                  map(toChar(displacement(1),displacement(2))) == 2)
             display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
             randomBounce(serPort);
+            display('END RANDOM BOUNCE');
         elseif(~isKey(map, toChar(displacement(1),displacement(2))))
             display('START WALL FOLLOW');
             WallFollow(serPort);
             display('END WALL FOLLOW');
+            randomBounce(serPort)
+            display('END RANDOM BOUNCE AFTER WALL FOLLOW');
         end
         
 %         pause(0.05);
     end
     SetFwdVelRadiusRoomba(serPort, 0, 2);
     
-    rect(map);
+    rect();
 end
 
 %% Spiral
 function spiral(serPort)
+    disp('SPIRAL');
     global map displacement;
     bumped = false;
     radius = 0.1;
@@ -97,21 +101,22 @@ function WallFollow(serPort)
     end
 
     
-    randomAngle = rand * 90 + 45
+    randomAngle = rand * 90 + 45;
     turnAngle(serPort, 0.1, randomAngle);
+    pause(0.1);
+
 end
 
 %% Bounce
 function randomBounce(serPort)
-    global map displacement;
-    randomAngle = rand * 180 + 90
-    turnAngle(serPort, 0.1, randomAngle);
+%     randomAngle = rand * 180 + 90;
+%     turnAngle(serPort, 0.1, randomAngle);
     
     % Go forward until bump
     bumped = false;
     while (~bumped)
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-        SetFwdVelRadiusRoomba(serPort, 0.2, radius);
+        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
         pause(0.05);
         bumped = BumpRight || BumpLeft || BumpFront;
         update(serPort);
@@ -171,7 +176,9 @@ function updateMap(val)
     diameter = 0.4;
     x = round(displacement(1)/diameter);
     y = round(displacement(2)/diameter);
-    if(~isKey(map, toChar(x,y)))
+    % Add to map if robot reaches a point for the first time
+    % or is replacing an observed point with a wall.
+    if(~isKey(map, toChar(x,y)) || map(toChar(x,y)) == 1)
         map(toChar(x,y)) = val;
     	time = tic;
     end

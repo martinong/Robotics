@@ -12,6 +12,6 @@ end
 
 %% Get (142) Wall Reading(8) data fields
 
-fwrite(serPort, [142 8]);
+% fwrite(serPort, [142 8]);
 wall_sensor = fread(serPort, 1);
 end

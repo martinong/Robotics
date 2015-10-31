@@ -3234,11 +3234,11 @@ classdef CreateRobot < handle
                     
                     % Choose correct turning direction for shortest path
                     if angle > 0
-                        disp(['Setting turn path to shortest route. '...
-                            'Going to turn counter-clockwise'])
+%                         disp(['Setting turn path to shortest route. '...
+%                             'Going to turn counter-clockwise'])
                     else
-                        disp(['Setting turn path to shortest route. '...
-                            'Going to turn clockwise'])
+%                         disp(['Setting turn path to shortest route. '...
+%                             'Going to turn clockwise'])
                         speed= -speed;
                     end
                     
@@ -3253,7 +3253,7 @@ classdef CreateRobot < handle
                         pause(0.05)
                     end
                     obj.wInt= 0;   % Stop when done
-                    disp('Done turnAngle')
+%                     disp('Done turnAngle')
                     
                 catch me
                     if ~strcmp(me.identifier,'SIMULATOR:AutonomousDisabled')
