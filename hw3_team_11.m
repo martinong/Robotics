@@ -21,7 +21,7 @@ function  hw3_team_11(serPort)
     global Total_Distance; Total_Distance = 0;
     diameter = .4;
     
-    % global fh_pos; fh_pos = figure();                             % Figure for plotting path
+    global fh_pos; fh_pos = figure();                             % Figure for plotting path
     hold on;
     global fh_rect; fh_rect = figure();
     %spiral until hit
@@ -41,11 +41,12 @@ function  hw3_team_11(serPort)
             WallFollow(serPort);
             display('END WALL FOLLOW');
             %randomBounce(serPort)
-            display('END RANDOM BOUNCE AFTER WALL FOLLOW');
+%             display('END RANDOM BOUNCE AFTER WALL FOLLOW');
         end
         pause(0.05);
     end
     SetFwdVelRadiusRoomba(serPort, 0, 2);
+    display('STOPPED');
     pause(.05);
     
     rect();
@@ -103,15 +104,27 @@ function WallFollow(serPort)
         updateMap(2);
     end
     
-%     randomAngle = rand * 90 + 45;
-%     turnAngle(serPort, 0.1, randomAngle);
-%     pause(0.1);
+    randomAngle = rand * 90 + 45
+    turnAngle(serPort, 0.1, randomAngle);
+    
+    % Go forward until bump
+    bumped = false;
+    while (~bumped)
+        [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+        pause(0.05);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        update(serPort);
+        updateMap(1);
+    end
+    SetFwdVelRadiusRoomba(serPort, 0, 2);
+    pause(0.05);
 
 end
 
 %% Bounce
 function randomBounce(serPort)
-    randomAngle = rand * 90 + 135;
+    randomAngle = rand * 90 + 135
     turnAngle(serPort, 0.1, randomAngle);
     pause(0.2);
     
@@ -125,12 +138,13 @@ function randomBounce(serPort)
         update(serPort);
         updateMap(1);
     end
+    SetFwdVelRadiusRoomba(serPort, 0, 2);
     pause(0.05);
 end
 
 %% Update the total distance travelled and displacement.
 function update(serPort)
-    global displacement a Total_Distance;
+    global displacement a Total_Distance fh_pos;
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
     [dr,dc] = size(d);
@@ -140,8 +154,8 @@ function update(serPort)
     end
     Total_Distance = Total_Distance + d;
     
-    % figure(fh_pos);
-    % plot(displacement(1), displacement(2), 'bo');             % Plots path
+    figure(fh_pos);
+    plot(displacement(1), displacement(2), 'bo');             % Plots path
     
     rect();
 end
