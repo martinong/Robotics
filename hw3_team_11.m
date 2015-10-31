@@ -22,8 +22,8 @@ function  hw3_team_11(serPort)
     diameter = .4;
     
     % global fh_pos; fh_pos = figure();                             % Figure for plotting path
-    hold on;
     global fh_rect; fh_rect = figure();
+    hold on;
     %spiral until hit
     spiral(serPort);
     
@@ -32,7 +32,7 @@ function  hw3_team_11(serPort)
         y = round(displacement(2)/diameter);
         % If we hit a wall, random bounce
         if(isKey(map, toChar(x,y)) && map(toChar(x,y)) == 2)
-            display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
+            display('BOUNCE');
             randomBounce(serPort);
             display('END RANDOM BOUNCE');
         % If we bump and have not wall followed already, then wall follow
@@ -40,8 +40,6 @@ function  hw3_team_11(serPort)
             display('START WALL FOLLOW');
             WallFollow(serPort);
             display('END WALL FOLLOW');
-            %randomBounce(serPort)
-            display('END RANDOM BOUNCE AFTER WALL FOLLOW');
         end
         pause(0.05);
     end
@@ -97,23 +95,19 @@ function WallFollow(serPort)
             % If there is no wall to the right, make a half-circle turn (round the corner) to the right looking
             % for another wall.
             SetFwdVelRadiusRoomba(serPort, 0.1, -0.2);
+            display('half-circle');
         end
         pause(0.05);
         update(serPort);
         updateMap(2);
     end
-    
-%     randomAngle = rand * 90 + 45;
-%     turnAngle(serPort, 0.1, randomAngle);
-%     pause(0.1);
-
 end
 
 %% Bounce
 function randomBounce(serPort)
-    randomAngle = rand * 90 + 135;
+    randomAngle = rand * 180 + 45;
     turnAngle(serPort, 0.1, randomAngle);
-    pause(0.2);
+    pause(2);
     
     % Go forward until bump
     bumped = false;
@@ -125,7 +119,7 @@ function randomBounce(serPort)
         update(serPort);
         updateMap(1);
     end
-    pause(0.05);
+    pause(0.1);
 end
 
 %% Update the total distance travelled and displacement.
@@ -149,7 +143,7 @@ end
 %% Plotting on map
 function rect()
 global map fh_rect;
-figure(fh_rect);
+%figure(fh_rect);
 diameter = 0.4;
 keyset = keys(map);
 points = zeros(length(keyset), 2);
@@ -187,7 +181,6 @@ function updateMap(val)
     	time = tic;
     end
 end
-
 
 function str = toChar(x, y)
 str = strcat(num2str(x), ',', num2str(y));
