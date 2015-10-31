@@ -27,7 +27,7 @@ function  hw3_team_11(serPort)
     %spiral until hit
     spiral(serPort);
     
-    while(toc(time) < 30) % Stop if map doesn't get updated within 30 sec.
+    while(toc(time) < 60) % Stop if map doesn't get updated within 60 sec.
         x = round(displacement(1)/diameter);
         y = round(displacement(2)/diameter);
         % If we hit a wall, random bounce
@@ -44,6 +44,7 @@ function  hw3_team_11(serPort)
         pause(0.05);
     end
     SetFwdVelRadiusRoomba(serPort, 0, 2);
+    display('STOPPED');
     pause(.05);
     
     rect();
@@ -51,15 +52,17 @@ end
 
 %% Spiral
 function spiral(serPort)
-    disp('SPIRAL');
     global map displacement;
     bumped = false;
     radius = 0.1;
     while (~bumped)
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        if(bumped)
+            break;
+        end
         SetFwdVelRadiusRoomba(serPort, 0.2, radius);
         pause(0.05);
-        bumped = BumpRight || BumpLeft || BumpFront;
         radius = min(radius + 0.005, 2);  
         update(serPort);
         if(~isKey(map, toChar(displacement(1),displacement(2))))
@@ -72,6 +75,7 @@ end
 function WallFollow(serPort)
     % Variable Declaration
     global displacement Total_Distance;
+    time2 = tic;
     Wall_Follow_Starting_Displacement = displacement;
     Wall_Follow_Starting_Distance = Total_Distance;
 
@@ -79,6 +83,12 @@ function WallFollow(serPort)
     while sqrt((displacement(1) - Wall_Follow_Starting_Displacement(1))^2 + ...
             (displacement(2) - Wall_Follow_Starting_Displacement(2))^2) > 0.25 ...
             || Total_Distance - Wall_Follow_Starting_Distance < 0.3
+        
+        % Only wall follow for max 30 seconds at a time
+        if(toc(time2) > 30)
+            display('Have wall followed for more than 30 seconds');
+            break;
+        end
         
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
         WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
@@ -88,38 +98,74 @@ function WallFollow(serPort)
         if(isCurrentlyBumped)
             % While the robot is being bumped, turn left until it is no longer being bumped.
             turnAngle(serPort, 0.1, 20);
+            disp('turn');
         elseif (WallSensor)
             % If it is against a wall and not being bumped, continue moving forward.
             SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+            disp('forward');
         else
             % If there is no wall to the right, make a half-circle turn (round the corner) to the right looking
             % for another wall.
             SetFwdVelRadiusRoomba(serPort, 0.1, -0.2);
-            display('half-circle');
+            disp('half circle');
         end
-        pause(0.05);
         update(serPort);
         updateMap(2);
+        pause(0.05);
     end
+    
+    randomAngle = rand * 90 + 45;
+    turnAngle(serPort, 0.1, randomAngle);
+%     theta = 0;
+%     while theta < randomAngle
+%         turnAngle(serPort, 0.1, 5);
+%         theta = theta + 10;
+%         pause(.05);
+%     end
+    
+    % Go forward until bump
+    [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+    bumped = BumpRight || BumpLeft || BumpFront;
+    while (~bumped)
+        [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+        update(serPort);
+        updateMap(1);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        if(bumped)
+            break;
+        end
+        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+        pause(0.05);
+    end
+%     SetFwdVelRadiusRoomba(serPort, 0, 2);
+%     pause(0.05);
 end
 
 %% Bounce
 function randomBounce(serPort)
-    randomAngle = rand * 180 + 45;
+    randomAngle = rand * 90 + 135;
     turnAngle(serPort, 0.1, randomAngle);
-    pause(2);
+%     theta = 0;
+%     while theta < randomAngle
+%         turnAngle(serPort, 0.1, 5);
+%         theta = theta + 10;
+%         pause(.01);
+%     end
     
-    % Go forward until bump
-    bumped = false;
+     % Go forward until bump
+    [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
+    bumped = BumpRight || BumpLeft || BumpFront;
     while (~bumped)
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort);
-        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
-        pause(0.05);
-        bumped = BumpRight || BumpLeft || BumpFront;
         update(serPort);
         updateMap(1);
+        bumped = BumpRight || BumpLeft || BumpFront;
+        if(bumped)
+            break;
+        end
+        SetFwdVelRadiusRoomba(serPort, 0.2, inf);
+        pause(0.05);
     end
-    pause(0.1);
 end
 
 %% Update the total distance travelled and displacement.
@@ -133,16 +179,13 @@ function update(serPort)
         displacement = displacement + [d*cos(a), d*sin(a)];
     end
     Total_Distance = Total_Distance + d;
-    
-    % figure(fh_pos);
-    % plot(displacement(1), displacement(2), 'bo');             % Plots path
-    
+       
     rect();
 end
 
 %% Plotting on map
 function rect()
-global map fh_rect;
+global map;
 %figure(fh_rect);
 diameter = 0.4;
 keyset = keys(map);
@@ -150,12 +193,6 @@ points = zeros(length(keyset), 2);
 for i=1:length(keyset)
    points(i, :) = toXY(keyset{i}); 
 end
-% minX = min(points(:, 1));
-% minY = min(points(:, 2));
-% maxX = max(points(:, 1));
-% maxX = max(points(:, 2));
-% width = maxX - minX;
-% height = maxY - minY;
 for i=1:size(points,1)
     x = points(i, 1);
     y = points(i, 2);
