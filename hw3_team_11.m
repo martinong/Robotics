@@ -28,7 +28,9 @@ function  hw3_team_11(serPort)
     spiral(serPort);
     
     while(toc(time) < 10) % Stop if map doesn't get updated within 30 sec.
-        map(toChar(displacement(1),displacement(2)))
+        if (isKey(map, toChar(displacement(1),displacement(2))))
+            map(toChar(displacement(1),displacement(2)))
+        end
         if(isKey(map, toChar(displacement(1),displacement(2))) && ...
                  map(toChar(displacement(1),displacement(2))) == 2)
             display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
@@ -137,7 +139,7 @@ function update(serPort)
     Total_Distance = Total_Distance + d;
     
     figure(fh_pos);
-    plot(displacement(1), displacement(2), 'bo');             % Plots path
+    % plot(displacement(1), displacement(2), 'bo');             % Plots path
     
     rect();
 end
