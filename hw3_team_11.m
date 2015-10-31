@@ -138,7 +138,7 @@ function update(serPort)
     end
     Total_Distance = Total_Distance + d;
     
-    figure(fh_pos);
+    % figure(fh_pos);
     % plot(displacement(1), displacement(2), 'bo');             % Plots path
     
     rect();
