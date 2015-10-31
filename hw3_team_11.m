@@ -19,34 +19,34 @@ function  hw3_team_11(serPort)
     global displacement; displacement = [0,0];                               % x and y displacement from first wall bump
     global a; a = 0;                                              % angle change since first wall bump
     global Total_Distance; Total_Distance = 0;
+    diameter = .4;
     
-    global fh_pos; fh_pos = figure();                             % Figure for plotting path
+    % global fh_pos; fh_pos = figure();                             % Figure for plotting path
     hold on;
     global fh_rect; fh_rect = figure();
-    
     %spiral until hit
     spiral(serPort);
     
-    while(toc(time) < 10) % Stop if map doesn't get updated within 30 sec.
-        if (isKey(map, toChar(displacement(1),displacement(2))))
-            map(toChar(displacement(1),displacement(2)))
-        end
-        if(isKey(map, toChar(displacement(1),displacement(2))) && ...
-                 map(toChar(displacement(1),displacement(2))) == 2)
+    while(toc(time) < 30) % Stop if map doesn't get updated within 30 sec.
+        x = round(displacement(1)/diameter);
+        y = round(displacement(2)/diameter);
+        % If we hit a wall, random bounce
+        if(isKey(map, toChar(x,y)) && map(toChar(x,y)) == 2)
             display('BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE BOUNCE!');
             randomBounce(serPort);
             display('END RANDOM BOUNCE');
-        elseif(~isKey(map, toChar(displacement(1),displacement(2))))
+        % If we bump and have not wall followed already, then wall follow
+        elseif(isKey(map, toChar(x,y)) && map(toChar(x,y)) < 2)
             display('START WALL FOLLOW');
             WallFollow(serPort);
             display('END WALL FOLLOW');
-            randomBounce(serPort)
+            %randomBounce(serPort)
             display('END RANDOM BOUNCE AFTER WALL FOLLOW');
         end
-        
-%         pause(0.05);
+        pause(0.05);
     end
     SetFwdVelRadiusRoomba(serPort, 0, 2);
+    pause(.05);
     
     rect();
 end
@@ -103,16 +103,17 @@ function WallFollow(serPort)
         updateMap(2);
     end
     
-    randomAngle = rand * 90 + 45;
-    turnAngle(serPort, 0.1, randomAngle);
-    pause(0.1);
+%     randomAngle = rand * 90 + 45;
+%     turnAngle(serPort, 0.1, randomAngle);
+%     pause(0.1);
 
 end
 
 %% Bounce
 function randomBounce(serPort)
-%     randomAngle = rand * 180 + 90;
-%     turnAngle(serPort, 0.1, randomAngle);
+    randomAngle = rand * 90 + 135;
+    turnAngle(serPort, 0.1, randomAngle);
+    pause(0.2);
     
     % Go forward until bump
     bumped = false;
@@ -124,11 +125,12 @@ function randomBounce(serPort)
         update(serPort);
         updateMap(1);
     end
+    pause(0.05);
 end
 
 %% Update the total distance travelled and displacement.
 function update(serPort)
-    global displacement a Total_Distance fh_pos;
+    global displacement a Total_Distance;
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
     [dr,dc] = size(d);
