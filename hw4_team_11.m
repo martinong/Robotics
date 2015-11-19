@@ -16,7 +16,7 @@ function  hw4_team_11(serPort)
     global a;                                       % Angle change
     global Total_Distance; Total_Distance = 0;      % Total distance traveled
     global diameter; diameter = 0.35;    
-    global fh_pos; fh_pos = figure(); hold on;      % Figure for plotting path
+%     global fh_pos; fh_pos = figure(); hold on;      % Figure for plotting position
 
     % IMPORTANT: Set this to the file containing the path points
     file_of_path = strcat(pwd,'/path.txt');
@@ -83,17 +83,10 @@ function WallFollow(serPort, direction)
     global position Total_Distance;
     WF_Start_Pos = position;
     WF_Start_Dist = Total_Distance;
-%     time = tic;
 
     % Continue until the robot reaches m-line and has travelled far enough
     while distBtwLinePoint(position-WF_Start_Pos, direction) > 0.25 ...
             || Total_Distance - WF_Start_Dist < 0.5
-        
-        % Only wall follow for max 60 seconds at a time
-%         if(toc(time) > 60)
-%             display('Have wall followed for more than 60 seconds');
-%             break;
-%         end
         
         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
         WallSensor = WallSensorReadRoomba(serPort);                 % Read Wall Sensor, Requires WallsSensorReadRoomba file
@@ -116,9 +109,6 @@ function WallFollow(serPort, direction)
         pause(0.05);
     end
     
-    distBtwLinePoint(position-WF_Start_Pos, direction)
-    Total_Distance - WF_Start_Dist
-    
     SetFwdVelRadiusRoomba(serPort, 0, 2);
     
 end
@@ -132,15 +122,16 @@ end
 
 %% Update the total distance travelled and position.
 function update(serPort)
-    global position a Total_Distance fh_pos;
+    global position a Total_Distance;
+%     global fh_pos;
     d = DistanceSensorRoomba(serPort);
     a = a + AngleSensorRoomba(serPort);
     [dr,dc] = size(d);
     [ar,ac] = size(a);
     if (dr && dc && ar && ac)
         position = position + [d*cos(a), d*sin(a)];
-        figure(fh_pos);
-        plot(position(1), position(2), 'bo');
+%         figure(fh_pos);
+%         plot(position(1), position(2), 'bo');
     end
     Total_Distance = Total_Distance + d;
 end
