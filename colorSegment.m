@@ -1,10 +1,8 @@
-function [maxArea, obj_x] = colorSegment()
+function [maxArea, obj_x] = colorSegment(serPort)
 
-first_img = imread('red2.png');
-imgs = cell(2, 1);
-imgs{1} = 'red2.png';
-imgs{2} = 'red1.png';
+first_img = imread('http://192.168.0.100/img/snapshot.cgi?');
 imshow(first_img);
+img_width = size(first_img, 2);
 [x, y] = ginput(1);
 x = floor(x);
 y = floor(y);
@@ -14,31 +12,30 @@ h = hsv(:,:,1);
 s = hsv(:,:,2);
 v = hsv(:,:,3);
 imshow(h);
-hLow = 0;
-hHigh = graythresh(h);
+hLow = h(y,x) - .3;
+hHigh = h(y, x) + .3;
 sLow = s(y, x) - .2;
 sHigh = s(y, x) + .2;
 vLow = v(y, x) - .2;
 vHigh = v(y, x) + .2;
 
-pastX = 0;
-pastArea = 0;
+initArea = 0;
 
-for i = 1:size(imgs, 1)
-    hsv = rgb2hsv(imread(imgs{i}));
+while true
+    img = imread('http://192.168.0.100/img/snapshot.cgi?');
+    hsv = rgb2hsv(img);
     h = hsv(:,:,1);
     s = hsv(:,:,2);
     v = hsv(:,:,3);
 
     hMask = (h >= hLow) & (h <= hHigh);
-    %imshow(hMask);
+%     imshow(hMask);
     sMask = (s >= sLow) & (s <= sHigh);
-    %imshow(sMask);
+%     imshow(sMask);
     vMask = (v >= vLow) & (v <= vHigh);
-    %imshow(vMask);
+%     imshow(vMask);
     objMask = uint8(hMask & sMask & vMask);
-    imshow(objMask);
-
+%     imshow(objMask);
     props = regionprops(bwlabel(objMask), 'area');
     maxArea = max([props.Area]);
     minObjArea = maxArea - 1;
@@ -51,22 +48,25 @@ for i = 1:size(imgs, 1)
     centroid = props.Centroid;
     obj_x = centroid(1);
     plot(centroid(1), centroid(2), 'r*');
-    if (pastX ~= 0 && pastArea ~= 0)
-        moveRobot(obj_x, maxArea, pastX, pastArea);
+%     pause(.1);
+    if (initArea ~= 0)
+        center_dist = obj_x - img_width/2;
+        diffArea = (initArea - maxArea)/initArea;
+        moveRobot(serPort, center_dist, diffArea);
+    else
+        initArea = maxArea
     end
-    pastX = obj_x;
-    pastArea = maxArea;
     
 end
 end
 
-function moveRobot(currX, currArea, pastX, pastArea)
-
-diffX = pastX - currX
-% got bigger -> negative, smaller -> positive
-diffArea = (pastArea - currArea)/pastArea
-
-%SetFwdVelRadiusRoomba(serPort, diffArea/10, 2);
-%turnAngle(serPort, 0.1, randomAngle);
+function moveRobot(serPort, center_dist, diffArea)
+diffArea;
+if (abs(center_dist) > 5)
+    turnAngle(serPort, 0.1, -center_dist/10);
+elseif(abs(diffArea) > .1)
+   SetFwdVelRadiusRoomba(serPort, diffArea/10 + .15, 2); 
+end
+% pause(.1);
 
 end
