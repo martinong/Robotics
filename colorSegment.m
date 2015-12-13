@@ -97,7 +97,11 @@ while true
 %     imshow(objMask);
     props = regionprops(bwlabel(objMask), 'area');
     maxArea = max([props.Area]);
-    minObjArea = 1000;
+    minObjArea = maxArea - 1;
+    if(maxArea < 1000)
+       turnAngle(serPort, 0.1, 20);
+       continue;
+    end
     objMask = uint8(bwareaopen(objMask, minObjArea));
     str_el = strel('disk', 25);
     objMask = imclose(objMask, str_el);
@@ -142,3 +146,4 @@ while (~bumped)
 end
 SetFwdVelRadiusRoomba(serPort, 0, 2);
 end
+    
