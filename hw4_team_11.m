@@ -52,24 +52,24 @@ function goTo(serPort, destination)
         % Find angle to destination
         angle = atan2(direction(2),direction(1));
 
-        % Turn to within 10 degree
-        while mod(abs(angle - a),2*pi) > (10/180*pi)
+        % Turn to within 5 degree
+        while mod(abs(angle - a),2*pi) > (5/180*pi)
             angleTurnd = (angle-a)/pi*180;
-            turnAngle(serPort, 0.15, angleTurnd);
+            turnAngle(serPort, 0.2, angleTurnd);
             pause(0.1);
             update(serPort);
         end
 
         % Move forward until close to destination
-        SetFwdVelRadiusRoomba(serPort, 0.15, Inf);
+        SetFwdVelRadiusRoomba(serPort, 0.25, Inf);
         pause(0.1);
         update(serPort);
         
         % If wall hit, then use part of Bug2 algorithm to go around obstacle
-        [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
-        if (BumpRight || BumpLeft || BumpFront)
-            WallFollow(serPort, direction);
-        end
+%         [ BumpRight, BumpLeft, ~, ~, ~, BumpFront] = BumpsWheelDropsSensorsRoomba(serPort); % Read Bumpers
+%         if (BumpRight || BumpLeft || BumpFront)
+%             WallFollow(serPort, direction);
+%         end
         
     end
     
